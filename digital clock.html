@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Clock</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            font-family: 'Orbitron', sans-serif;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        
+        .clock-container {
+            text-align: center;
+            perspective: 1000px;
+        }
+        
+        .clock {
+            font-size: 5rem;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            position: relative;
+            padding: 20px 40px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            transform-style: preserve-3d;
+            transition: all 0.5s ease;
+        }
+        
+        .time {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .date-display {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .controls {
+            margin-top: 30px;
+        }
+        
+        button {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(0, 255, 255, 0.5);
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            .clock {
+                font-size: 3rem;
+                padding: 15px 25px;
+            }
+            
+            .date-display {
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .clock {
+                font-size: 2rem;
+                letter-spacing: 2px;
+            }
+            
+            .time span {
+                margin: 0 2px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            button {
+                margin: 5px 0;
+            }
+        }
+        
+        /* Particle background */
+        .particle {
+            position: absolute;
+            background-color: rgba(0, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <h1>Digital Clock</h1>
+        
+        <div class="clock">
+            <div class="time">
+                <span id="hours">00</span>
+                <span>:</span>
+                <span id="minutes">00</span>
+                <span>:</span>
+                <span id="seconds">00</span>
+                <span id="ampm" class="blink">AM</span>
+            </div>
+            <div class="date-display" id="date"></div>
+        </div>
+        
+        <div class="controls">
+            <button id="toggleSeconds">Hide Seconds</button>
+            <button id="toggleBlink">Disable Blinking</button>
+            <button id="toggleFormat">Switch to 24h Format</button>
+        </div>
+    </div>
+
+    <script>
+        // Main clock function
+        function updateClock() {
+            const now = new Date();
+            const hoursElement = document.getElementById('hours');
+            const minutesElement = document.getElementById('minutes');
+            const secondsElement = document.getElementById('seconds');
+            const ampmElement = document.getElementById('ampm');
+            const dateElement = document.getElementById('date');
+            
+            // Get current time
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds();
+            let ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            // Convert to 12-hour format if needed
+            let displayHours = is24HourFormat ? hours : hours % 12;
+            displayHours = displayHours === 0 ? 12 : displayHours;
+            
+            // Format with leading zeros
+            hoursElement.textContent = displayHours.toString().padStart(2, '0');
+            minutesElement.textContent = minutes.toString().padStart(2, '0');
+            secondsElement.textContent = seconds.toString().padStart(2, '0');
+            ampmElement.textContent = is24HourFormat ? '' : ampm;
+            
+            // Update date display
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateElement.textContent = now.toLocaleDateString(undefined, options);
+            
+            // Smooth transitions
+            requestAnimationFrame(() => {
+                document.querySelector('.clock').style.transform = 
+                    `rotateX(${Math.sin(Date.now() / 1000) * 2}deg) rotateY(${Math.sin(Date.now() / 1200) * 2}deg)`;
+            });
+        }
+        
+        // Create floating particles
+        function createParticles() {
+            const particleCount = 50;
+            const colors = ['rgba(0, 255, 255, 0.5)', 'rgba(0, 200, 255, 0.4)', 'rgba(0, 150, 255, 0.3)'];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random properties
+                const size = Math.random() * 5 + 1;
+                const posX = Math.random() * window.innerWidth;
+                const posY = Math.random() * window.innerHeight;
+                const animDuration = Math.random() * 15 + 5;
+                const delay = Math.random() * 5;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Apply styles
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}px`;
+                particle.style.top = `${posY}px`;
+                particle.style.background = color;
+                particle.style.opacity = '0';
+                
+                // Animation
+                particle.style.animation = `float ${animDuration}s ease-in-out ${delay}s infinite alternate`;
+                
+                document.body.appendChild(particle);
+                
+                // Fade in
+                setTimeout(() => {
+                    particle.style.opacity = '0.7';
+                }, delay * 1000);
+            }
+            
+            // Add animation keyframes dynamically
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes float {
+                    0% { transform: translate(0, 0); }
+                    50% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px); }
+                    100% { transform: translate(0, 0); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // State variables
+        let showSeconds = true;
+        let isBlinking = true;
+        let is24HourFormat = false;
+        
+        // Initialize clock and UI
+        function init() {
+            // Setup event listeners
+            document.getElementById('toggleSeconds').addEventListener('click', function() {
+                showSeconds = !showSeconds;
+                document.getElementById('seconds').style.display = showSeconds ? 'inline' : 'none';
+                document.querySelector('.time span:nth-child(4)').style.display = showSeconds ? 'inline' : 'none';
+                this.textContent = showSeconds ? 'Hide Seconds' : 'Show Seconds';
+            });
+            
+            document.getElementById('toggleBlink').addEventListener('click', function() {
+                isBlinking = !isBlinking;
+                document.getElementById('ampm').classList.toggle('blink', isBlinking);
+                this.textContent = isBlinking ? 'Disable Blinking' : 'Enable Blinking';
+            });
+            
+            document.getElementById('toggleFormat').addEventListener('click', function() {
+                is24HourFormat = !is24HourFormat;
+                this.textContent = is24HourFormat ? 'Switch to 12h Format' : 'Switch to 24h Format';
+            });
+            
+            // Start clock
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Create background particles
+            createParticles();
+        }
+        
+        // Start the application
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
